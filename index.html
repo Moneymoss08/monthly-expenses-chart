@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Monthly Expenses Chart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f3ec; --surface:#ffffff; --surface2:#fffaf0; --ink:#1a1f1e; --muted:#6b7280; --line:#e8e0d1;
+    --teal:#0f766e; --teal-light:#ccfbf1; --amber:#b45309; --amber-light:#fef3c7; --slate:#334155; --slate-light:#e2e8f0;
+    --gas:#c2410c; --gas-light:#ffedd5;
+    --green:#15803d; --red:#b91c1c;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#121615; --surface:#1c2221; --surface2:#232a29; --ink:#f3f4f1; --muted:#9ca3af; --line:#2e3533; --teal-light:#134e4a; --amber-light:#451a03; --slate-light:#1e293b; --gas-light:#431407; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.5}
+  a{color:var(--teal)}
+  .wrap{max-width:980px;margin:0 auto;padding:20px 18px 36px}
+  /* Header */
+  .top{padding:8px 0 18px;border-bottom:2px solid var(--ink)}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--teal)}
+  h1{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:42px;line-height:1;margin:8px 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:15px;max-width:620px}
+  .sub strong{color:var(--ink)}
+  /* Summary */
+  .summary{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px;margin:18px 0}
+  .stat{background:var(--ink);color:#fff;border-radius:var(--radius);padding:18px}
+  .stat.light{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+  .stat label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;font-weight:700}
+  .stat .big{font-size:36px;font-weight:800;letter-spacing:-.03em;line-height:1;margin:6px 0 4px}
+  .stat.light .big{font-size:28px}
+  .stat p{margin:0;font-size:13px;opacity:.8;line-height:1.4}
+  /* Filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 14px}
+  .filters button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;font-weight:700;font-size:13px;cursor:pointer}
+  .filters button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  /* Chart */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:18px;letter-spacing:-.02em}
+  .card h2 + p{margin:0;color:var(--muted);font-size:13px}
+  .bars{margin-top:18px;display:flex;flex-direction:column;gap:13px}
+  .bar-row{display:grid;grid-template-columns:150px 1fr 72px;gap:12px;align-items:center}
+  .bar-label{font-size:13px;font-weight:600;line-height:1.2}
+  .bar-label span{display:block;font-weight:400;color:var(--muted);font-size:12px}
+  .track{height:14px;background:var(--line);border-radius:999px;overflow:hidden}
+  .fill{height:100%;border-radius:999px}
+  .fill.bills{background:var(--teal)} .fill.family{background:var(--amber)} .fill.subs{background:var(--slate)} .fill.gas{background:var(--gas)}
+  .bar-amt{font-weight:800;font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;font-weight:600}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:6px}
+  /* Timeline */
+  .timeline{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:16px}
+  .day{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px}
+  .day b{font-size:22px;line-height:1}
+  .day small{display:block;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+  .day p{margin:0;font-size:12.5px;line-height:1.4}
+  .day p strong{display:block;font-size:13px}
+  /* Expense list */
+  .group-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--muted);margin:22px 0 10px}
+  .expense{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .expense:last-child{border-bottom:none}
+  .expense h3{margin:0;font-size:16px}
+  .expense .meta{color:var(--muted);font-size:13px;margin-top:3px}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--teal-light);color:var(--teal);vertical-align:middle;margin-left:6px}
+  .pill.amber{background:var(--amber-light);color:var(--amber)} .pill.slate{background:var(--slate-light);color:var(--slate)} .pill.gas{background:var(--gas-light);color:var(--gas)}
+  @media (prefers-color-scheme: dark){ .pill.slate{color:#cbd5e1} .pill.gas{color:#fdba74} }
+  .price{text-align:right;flex-shrink:0}
+  .price b{font-size:20px;letter-spacing:-.02em}
+  .price span{display:block;color:var(--muted);font-size:12px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.5}
+  @media (prefers-color-scheme: dark){ .note{background:#29200a;border-color:#713f12;color:#fde68a} }
+  .footer{color:var(--muted);font-size:12.5px;line-height:1.6;margin-top:18px}
+  .hidden{display:none !important}
+  @media(max-width:700px){
+    h1{font-size:34px}
+    .summary{grid-template-columns:1fr 1fr}
+    .summary .stat:first-child{grid-column:1/-1}
+    .bar-row{grid-template-columns:104px 1fr 74px;gap:8px}
+    .timeline{grid-template-columns:1fr 1fr}
+    .expense{flex-direction:row}
+  }
+  @media(max-width:420px){ .timeline{grid-template-columns:1fr} .bar-label{font-size:12px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Money — October 2026 snapshot • Updated Oct 14 — everything included</div>
+    <h1>Monthly expenses,<br>mapped out.</h1>
+    <p class="sub">Every bill and subscription you're tracking right now — with the <strong>amount</strong> and the <strong>date it hits</strong>. Now includes <strong>Tidal Wavez 🌊</strong>, <strong>Spectrum Wi-Fi at $70/month — $145 due Oct 27</strong> ($70 current + $75 past due), and <strong>each Progressive installment</strong> in the monthly total — plus <strong>gas at your $1,100/month average</strong>, now your biggest expense of all.</p>
+  </header>
+
+  <section class="summary" aria-label="Summary">
+    <div class="stat">
+      <label>Monthly total — everything included</label>
+      <div class="big">$1,689.08</div>
+      <p>Bills $383.46 + family phones $117.77 + subscriptions $87.85 + gas $1,100.00. Gas alone is 65% of the month — bigger than everything else combined. 11 monthly expenses counted.</p>
+    </div>
+    <div class="stat light">
+      <label>Spectrum Wi-Fi — due Oct 27</label>
+      <div class="big">$145.00 due</div>
+      <p><strong>Due October 27, 2026.</strong> That's $70 for the current month plus <strong>$75 past due</strong>. The recurring charge stays $70/month, so the monthly total counts only the $70 — the $75 past due isn't double-counted. The Oct 10 date on the summary tile is the statement date, not the due date.</p>
+    </div>
+    <div class="stat light">
+      <label>Next due</label>
+      <div class="big">Oct 27</div>
+      <p><strong>Spectrum Wi-Fi — $145.00 due Oct 27</strong> ($70 current + $75 past due). Then your phone — $62.77 to your mother on Oct 28, then National Grid $105.06 on Nov 6.</p>
+    </div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Filter expenses">
+    <button class="active" data-filter="all">All monthly — $1,689.08</button>
+    <button data-filter="bills">Bills — $383.46</button>
+    <button data-filter="family">Family phones — $117.77</button>
+    <button data-filter="subs">Subscriptions — $87.85</button>
+    <button data-filter="gas">Gas — $1,100.00</button>
+  </div>
+  <p style="margin:-6px 0 14px;color:var(--muted);font-size:13px">Bills $383.46 includes Progressive $208.40 per installment (5 installments), National Grid $105.06, and Spectrum Wi-Fi $70.00. Subscriptions $87.85 now includes Tidal Wavez 🌊 at $43.17. Gas $1,100.00 is your own average — September ran low because your car was down.</p>
+
+  <!-- BAR CHART -->
+  <section class="card" id="chartCard">
+    <h2>Where the money goes — everything included</h2>
+    <p>Bar length = monthly recurring amount. Sorted biggest to smallest. Monthly total $1,689.08 — gas at $1,100/mo is the largest bar by far (65% of the month), ahead of Progressive, Tidal Wavez 🌊, and Spectrum at $70/mo recurring. Spectrum's $145 due Oct 27 includes $75 past due, shown separately so it isn't double-counted here.</p>
+    <div class="bars" id="bars">
+      <div class="bar-row" data-cat="gas"><div class="bar-label">Gas<span>Your average • monthly</span></div><div class="track"><div class="fill gas" style="width:100%"></div></div><div class="bar-amt">$1,100.00</div></div>
+      <div class="bar-row" data-cat="bills"><div class="bar-label">Progressive<span>Per installment • monthly</span></div><div class="track"><div class="fill bills" style="width:18.9%"></div></div><div class="bar-amt">$208.40</div></div>
+      <div class="bar-row" data-cat="bills"><div class="bar-label">National Grid<span>Due Nov 6</span></div><div class="track"><div class="fill bills" style="width:9.6%"></div></div><div class="bar-amt">$105.06</div></div>
+      <div class="bar-row" data-cat="bills"><div class="bar-label">Spectrum Wi-Fi<span>Due Oct 27 • $145 due now</span></div><div class="track"><div class="fill bills" style="width:6.4%"></div></div><div class="bar-amt">$70.00</div></div>
+      <div class="bar-row" data-cat="family"><div class="bar-label">Your phone — via Mom<span>Due 28th • Cash App</span></div><div class="track"><div class="fill family" style="width:5.7%"></div></div><div class="bar-amt">$62.77</div></div>
+      <div class="bar-row" data-cat="family"><div class="bar-label">Child's phone<span>Monthly • Cash App</span></div><div class="track"><div class="fill family" style="width:5.0%"></div></div><div class="bar-amt">$55.00</div></div>
+      <div class="bar-row" data-cat="subs"><div class="bar-label">Tidal Wavez 🌊<span>Last charged Sep 17</span></div><div class="track"><div class="fill subs" style="width:3.9%"></div></div><div class="bar-amt">$43.17</div></div>
+      <div class="bar-row" data-cat="subs"><div class="bar-label">LA Fitness<span>Sep 25</span></div><div class="track"><div class="fill subs" style="width:1.8%"></div></div><div class="bar-amt">$19.99</div></div>
+      <div class="bar-row" data-cat="subs"><div class="bar-label">Apple Music<span>Oct 6</span></div><div class="track"><div class="fill subs" style="width:1.1%"></div></div><div class="bar-amt">$11.99</div></div>
+      <div class="bar-row" data-cat="subs"><div class="bar-label">Netflix<span>Sep 23</span></div><div class="track"><div class="fill subs" style="width:0.9%"></div></div><div class="bar-amt">$9.71</div></div>
+      <div class="bar-row" data-cat="subs"><div class="bar-label">iCloud+ 200GB<span>Sep 23</span></div><div class="track"><div class="fill subs" style="width:0.3%"></div></div><div class="bar-amt">$2.99</div></div>
+    </div>
+    <div class="legend"><span><i class="dot" style="background:var(--gas)"></i>Gas</span><span><i class="dot" style="background:var(--teal)"></i>Bills &amp; insurance</span><span><i class="dot" style="background:var(--amber)"></i>Family phones</span><span><i class="dot" style="background:var(--slate)"></i>Subscriptions</span></div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="card">
+    <h2>Mapped by date — throughout the month</h2>
+    <p>When each charge lands in the month — using due dates where you have them, last-charged dates for subscriptions. Everything is included.</p>
+    <div class="timeline">
+      <div class="day"><small>Oct 6</small><b>6</b><p><strong>Apple Music</strong>$11.99 charged</p></div>
+      <div class="day"><small>Sep 17</small><b>17</b><p><strong>Tidal Wavez 🌊</strong>$43.17 charged</p></div>
+      <div class="day"><small>Sep 23</small><b>23</b><p><strong>Netflix + iCloud+</strong>$9.71 + $2.99 charged</p></div>
+      <div class="day"><small>Sep 24</small><b>24</b><p><strong>Child's phone</strong>$55.00 via Cash App</p></div>
+      <div class="day"><small>Sep 25</small><b>25</b><p><strong>LA Fitness</strong>$19.99 charged</p></div>
+      <div class="day"><small>Due Oct 27</small><b>27</b><p><strong>Spectrum Wi-Fi</strong>$145.00 due — $70 current + $75 past due (recurring is $70/mo)</p></div>
+      <div class="day"><small>Every month</small><b>28</b><p><strong>Your phone — Mom</strong>$62.77 due the 28th</p></div>
+      <div class="day"><small>Due date</small><b>Nov 6</b><p><strong>National Grid</strong>$105.06 due</p></div>
+      <div class="day"><small>Monthly installment</small><b>—</b><p><strong>Progressive</strong>$208.40 per installment × 5 — auto-pay; exact dates behind Progressive login, not in email</p></div>
+    </div>
+  </section>
+
+  <!-- DETAIL LIST -->
+  <section class="card" id="detailCard">
+    <h2>All expenses — dates &amp; prices</h2>
+    <p>Tap a filter above to focus on one group.</p>
+
+    <div class="group" data-cat="gas">
+      <div class="group-title">Gas — $1,100.00</div>
+      <article class="expense"><div><h3>Gas <span class="pill gas">Your average</span></h3><div class="meta"><strong>$1,100/month is your own average</strong> (you confirmed it Oct 14) — not a single month's actual total • September ran low at <strong>$326.42</strong> in gas-station charges because your car was down; July was <strong>$1,189.57</strong> and August <strong>$1,104.81</strong> • Those monthly figures come from gas-station charges on your linked accounts, so they include anything bought inside the store too — the bank can't split fuel from snacks • At $1,100, gas is <strong>65% of your $1,689.08 monthly total</strong> — bigger than all your other expenses combined ($589.08)</div></div><div class="price"><b>$1,100.00</b><span>per month • your average</span></div></article>
+    </div>
+
+    <div class="group" data-cat="bills">
+      <div class="group-title">Bills &amp; Insurance — $383.46</div>
+      <article class="expense"><div><h3>Progressive Auto Insurance <span class="pill">Installment — now monthly</span></h3><div class="meta">2015 BMW X5 • Policy #880894215 • 6-month term Oct 5, 2026 – Apr 5, 2027 • $258 paid Oct 5, then <strong>5 installments × $208.40</strong> • Per your request, each installment is now counted in the monthly total • Progressive's Oct 6 email confirms you're on automatic payments, but the exact installment dates are behind the “View your payment schedule” login link — they are not listed in the email itself</div></div><div class="price"><b>$208.40</b><span>per installment</span></div></article>
+      <article class="expense"><div><h3>National Grid <span class="pill">Utility</span></h3><div class="meta">Current bill: <strong>$105.06 due Nov 6, 2026</strong> (from your Gmail screenshot) • Last payment was $171.85 on Oct 11 — amounts vary by usage</div></div><div class="price"><b>$105.06</b><span>due Nov 6</span></div></article>
+      <article class="expense"><div><h3>Spectrum Wi-Fi <span class="pill">Internet</span></h3><div class="meta"><strong>$70/month recurring</strong> • <strong>$145.00 currently due October 27, 2026</strong> — that's $70 for the current month plus <strong>$75 past due</strong> • Verified from the detailed Spectrum bill: the October 10 date on the summary tile is the statement date, not the due date — <strong>October 27 is the due date</strong> • Monthly total counts only the $70 recurring charge, so the $75 past due is shown here without inflating the monthly total</div></div><div class="price"><b>$70.00</b><span>per month • $145 due Oct 27</span></div></article>
+    </div>
+
+    <div class="group" data-cat="family">
+      <div class="group-title">Family Phones — via Cash App — $117.77</div>
+      <article class="expense"><div><h3>Your phone bill — to your mother <span class="pill amber">Family</span></h3><div class="meta">Via Cash App • <strong>Due the 28th of every month</strong> • Amount from you — not yet matched to a card charge</div></div><div class="price"><b>$62.77</b><span>due 28th</span></div></article>
+      <article class="expense"><div><h3>Child's phone bill <span class="pill amber">Family</span></h3><div class="meta">Via Cash App • Monthly $55 transfers confirmed in card charges • Last one Sep 24, 2026</div></div><div class="price"><b>$55.00</b><span>monthly</span></div></article>
+    </div>
+
+    <div class="group" data-cat="subs">
+      <div class="group-title">Subscriptions — $87.85</div>
+      <article class="expense"><div><h3>Tidal Wavez 🌊 — Tidal Wave Auto Spa <span class="pill slate">Subscription</span></h3><div class="meta">Car wash plan • <strong>Now counted as monthly at $43.17</strong> — that's the amount charged Jul 1, Aug 2 &amp; Sep 17, 2026 • There was also a separate $16.20 charge Sep 24 • Last charged Sep 17</div></div><div class="price"><b>$43.17</b><span>Sep 17</span></div></article>
+      <article class="expense"><div><h3>LA Fitness <span class="pill slate">Subscription</span></h3><div class="meta">Last charged Sep 25, 2026 • No August charge showed — Jun, Jul &amp; Sep were $19.99</div></div><div class="price"><b>$19.99</b><span>Sep 25</span></div></article>
+      <article class="expense"><div><h3>Apple Music <span class="pill slate">Subscription</span></h3><div class="meta">Last charged Oct 6, 2026 • Price rose from $10.99 to $11.99 in September</div></div><div class="price"><b>$11.99</b><span>Oct 6</span></div></article>
+      <article class="expense"><div><h3>Netflix <span class="pill slate">Subscription</span></h3><div class="meta">Last charged Sep 23, 2026 • Billed to card, no email receipt</div></div><div class="price"><b>$9.71</b><span>Sep 23</span></div></article>
+      <article class="expense"><div><h3>iCloud+ 200GB <span class="pill slate">Subscription</span></h3><div class="meta">Last charged Sep 23, 2026 • This is the plan you're keeping</div></div><div class="price"><b>$2.99</b><span>Sep 23</span></div></article>
+    </div>
+  </section>
+
+  <div class="note"><strong>What changed in this update:</strong> Gas added at your <strong>$1,100/month average</strong> — it's now the biggest expense on the chart at <strong>65% of the $1,689.08 monthly total</strong>, more than the other $589.08 combined. September ran low ($326.42 at gas stations) because your car was down; July was $1,189.57 and August $1,104.81, and those gas-station totals include anything bought inside the store too, since the bank can't split fuel from snacks. Spectrum due date found — <strong>$145.00 due October 27, 2026</strong> ($70 current month + <strong>$75 past due</strong>). Spectrum stays <strong>$70/month</strong> as the recurring charge — the past-due $75 is shown as due now, not double-counted into the monthly total. <strong>Tidal Wavez 🌊 at $43.17/month</strong> and <strong>Progressive's $208.40 installments</strong> (5 installments for policy #880894215) remain included. The duplicate iCloud+ 100GB plan ($2.15/mo, last charged Oct 4) was cancelled Oct 14 — it's not counted; the 200GB plan ($2.99) stays.</div>
+
+  <p class="footer"><strong>Spectrum — verified (Oct 14):</strong> Spectrum Internet is $70/month recurring, with <strong>$145.00 due October 27, 2026</strong> — $70 current month plus $75 past due — from the detailed bill. The October 10 date on the billing summary tile is the statement date, not the due date. <strong>Progressive dates:</strong> the Oct 5–6 Progressive emails confirm auto-pay and the $1,300 premium ($258 paid + 5 × $208.40), but the payment schedule itself is behind a login link, not in the email body. <strong>Gas:</strong> $1,100/month is your own average, confirmed Oct 14 — September ran low because your car was down, and gas-station charges include in-store purchases the bank can't separate from fuel. <strong>Still not counted:</strong> National Fuel — on your watch list, but no bill amount or payment has been found in email or linked accounts, so it's left at $0 rather than guessed. Snapshot updated Oct 14, 2026.</p>
+</div>
+<script>
+  var btns=document.querySelectorAll('.filters button');
+  function applyFilter(cat){
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.filter===cat); });
+    document.querySelectorAll('#bars .bar-row').forEach(function(r){ r.classList.toggle('hidden', cat!=='all' && r.dataset.cat!==cat); });
+    document.querySelectorAll('#detailCard .group').forEach(function(g){ g.classList.toggle('hidden', cat!=='all' && g.dataset.cat!==cat); });
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ applyFilter(b.dataset.filter); }); });
+</script>
+</body>
+</html>
